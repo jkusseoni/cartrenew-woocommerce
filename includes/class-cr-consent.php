@@ -83,14 +83,14 @@ class CartRenew_WC_Consent {
 		?>
 		<div id="cartrenew-consent-box" style="<?php echo esc_attr( $style ); ?>">
 			<p style="margin-top:0;font-weight:600;">
-				<?php esc_html_e( 'Get a WhatsApp reminder if you don\'t finish checking out', 'cartrenew-woocommerce' ); ?>
+				<?php esc_html_e( 'Get a WhatsApp reminder if you don\'t finish checking out', 'cartrenew-for-woocommerce' ); ?>
 			</p>
 			<p>
-				<input type="tel" id="cartrenew_phone" placeholder="<?php esc_attr_e( 'WhatsApp number, e.g. 9876543210', 'cartrenew-woocommerce' ); ?>" value="<?php echo esc_attr( $session ); ?>" style="width:100%;max-width:280px;" />
+				<input type="tel" id="cartrenew_phone" placeholder="<?php esc_attr_e( 'WhatsApp number, e.g. 9876543210', 'cartrenew-for-woocommerce' ); ?>" value="<?php echo esc_attr( $session ); ?>" style="width:100%;max-width:280px;" />
 			</p>
 			<label style="display:block;margin-bottom:8px;">
 				<input type="checkbox" id="cartrenew_consent" <?php echo esc_attr( $checked ); ?> />
-				<?php esc_html_e( 'Yes, remind me on WhatsApp if I leave items in my cart.', 'cartrenew-woocommerce' ); ?>
+				<?php esc_html_e( 'Yes, remind me on WhatsApp if I leave items in my cart.', 'cartrenew-for-woocommerce' ); ?>
 			</label>
 			<span id="cartrenew-consent-status" style="font-size:12px;color:#666;"></span>
 		</div>

@@ -28,7 +28,7 @@ define( 'CARTRENEW_WC_DEFAULT_API_BASE', 'https://www.cartrenew.com/api/woocomme
  */
 function cartrenew_wc_missing_woocommerce_notice() {
 	echo '<div class="notice notice-error"><p>';
-	esc_html_e( 'CartRenew for WooCommerce requires WooCommerce to be installed and active.', 'cartrenew-woocommerce' );
+	esc_html_e( 'CartRenew for WooCommerce requires WooCommerce to be installed and active.', 'cartrenew-for-woocommerce' );
 	echo '</p></div>';
 }
 
@@ -82,7 +82,7 @@ register_deactivation_hook( __FILE__, 'cartrenew_wc_deactivate' );
 function cartrenew_wc_add_cron_interval( $schedules ) {
 	$schedules['cartrenew_five_minutes'] = array(
 		'interval' => 300,
-		'display'  => __( 'Every 5 minutes (CartRenew)', 'cartrenew-woocommerce' ),
+		'display'  => __( 'Every 5 minutes (CartRenew)', 'cartrenew-for-woocommerce' ),
 	);
 	return $schedules;
 }

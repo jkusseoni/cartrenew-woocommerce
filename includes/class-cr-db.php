@@ -55,8 +55,13 @@ class CartRenew_WC_DB {
 		global $wpdb;
 		$table = self::table_name();
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom table, no core API available
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- transient cart data, caching not beneficial
 		$existing = $wpdb->get_row(
-			$wpdb->prepare( "SELECT id, status FROM {$table} WHERE cart_key = %s", $cart_key )
+			$wpdb->prepare(
+				"SELECT id, status FROM {$wpdb->prefix}cartrenew_carts WHERE cart_key = %s",
+				$cart_key
+			)
 		);
 
 		$now = current_time( 'mysql' );
@@ -69,6 +74,8 @@ class CartRenew_WC_DB {
 			}
 
 			$data['last_activity'] = $now;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom table, no core API available
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- transient cart data, caching not beneficial
 			$wpdb->update( $table, $data, array( 'id' => $existing->id ) );
 			return $existing->id;
 		}
@@ -80,6 +87,8 @@ class CartRenew_WC_DB {
 			$data['status'] = 'tracking';
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom table, no core API available
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- transient cart data, caching not beneficial
 		$wpdb->insert( $table, $data );
 		return $wpdb->insert_id;
 	}
@@ -88,7 +97,9 @@ class CartRenew_WC_DB {
 		global $wpdb;
 		$table = self::table_name();
 
-		$data           = array_merge( array( 'status' => $status ), $extra );
+		$data = array_merge( array( 'status' => $status ), $extra );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom table, no core API available
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- transient cart data, caching not beneficial
 		$wpdb->update( $table, $data, array( 'cart_key' => $cart_key ) );
 	}
 
@@ -98,19 +109,23 @@ class CartRenew_WC_DB {
 	 */
 	public static function get_abandoned_carts( $minutes = 20, $limit = 50 ) {
 		global $wpdb;
-		$table = self::table_name();
 
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( $minutes * 60 ) - ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS ) );
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom table, no core API available
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- transient cart data, caching not beneficial
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table}
-				 WHERE status = 'tracking'
-				 AND consent = 1
-				 AND phone_number IS NOT NULL AND phone_number != ''
+				"SELECT * FROM {$wpdb->prefix}cartrenew_carts
+				 WHERE status = %s
+				 AND consent = %d
+				 AND phone_number IS NOT NULL AND phone_number != %s
 				 AND last_activity <= %s
 				 ORDER BY last_activity ASC
 				 LIMIT %d",
+				'tracking',
+				1,
+				'',
 				$cutoff,
 				$limit
 			)

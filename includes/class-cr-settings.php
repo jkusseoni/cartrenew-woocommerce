@@ -19,8 +19,8 @@ class CartRenew_WC_Settings {
 	public static function add_menu() {
 		add_submenu_page(
 			'woocommerce',
-			__( 'CartRenew', 'cartrenew-woocommerce' ),
-			__( 'CartRenew', 'cartrenew-woocommerce' ),
+			__( 'CartRenew', 'cartrenew-for-woocommerce' ),
+			__( 'CartRenew', 'cartrenew-for-woocommerce' ),
 			'manage_woocommerce',
 			'cartrenew-settings',
 			array( __CLASS__, 'render_page' )
@@ -81,36 +81,36 @@ class CartRenew_WC_Settings {
 		$s = self::get_settings();
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'CartRenew Settings', 'cartrenew-woocommerce' ); ?></h1>
-			<p><?php esc_html_e( 'Connect this store to your CartRenew account to enable WhatsApp abandoned-cart recovery.', 'cartrenew-woocommerce' ); ?></p>
+			<h1><?php esc_html_e( 'CartRenew Settings', 'cartrenew-for-woocommerce' ); ?></h1>
+			<p><?php esc_html_e( 'Connect this store to your CartRenew account to enable WhatsApp abandoned-cart recovery.', 'cartrenew-for-woocommerce' ); ?></p>
 			<form method="post" action="options.php">
 				<?php settings_fields( self::OPTION_KEY ); ?>
 				<table class="form-table" role="presentation">
 					<tr>
-						<th scope="row"><label for="cr_store_id"><?php esc_html_e( 'CartRenew Store ID', 'cartrenew-woocommerce' ); ?></label></th>
+						<th scope="row"><label for="cr_store_id"><?php esc_html_e( 'CartRenew Store ID', 'cartrenew-for-woocommerce' ); ?></label></th>
 						<td><input type="text" id="cr_store_id" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[store_id]" value="<?php echo esc_attr( $s['store_id'] ); ?>" class="regular-text" /></td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="cr_api_key"><?php esc_html_e( 'API Key', 'cartrenew-woocommerce' ); ?></label></th>
+						<th scope="row"><label for="cr_api_key"><?php esc_html_e( 'API Key', 'cartrenew-for-woocommerce' ); ?></label></th>
 						<td><input type="password" id="cr_api_key" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[api_key]" value="<?php echo esc_attr( $s['api_key'] ); ?>" class="regular-text" autocomplete="off" /></td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="cr_api_base"><?php esc_html_e( 'API Base URL', 'cartrenew-woocommerce' ); ?></label></th>
+						<th scope="row"><label for="cr_api_base"><?php esc_html_e( 'API Base URL', 'cartrenew-for-woocommerce' ); ?></label></th>
 						<td>
 							<input type="url" id="cr_api_base" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[api_base]" value="<?php echo esc_attr( $s['api_base'] ); ?>" class="regular-text" />
-							<p class="description"><?php esc_html_e( 'Leave default unless CartRenew support tells you otherwise.', 'cartrenew-woocommerce' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Leave default unless CartRenew support tells you otherwise.', 'cartrenew-for-woocommerce' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="cr_abandon_minutes"><?php esc_html_e( 'Abandonment wait time (minutes)', 'cartrenew-woocommerce' ); ?></label></th>
+						<th scope="row"><label for="cr_abandon_minutes"><?php esc_html_e( 'Abandonment wait time (minutes)', 'cartrenew-for-woocommerce' ); ?></label></th>
 						<td><input type="number" min="5" max="180" id="cr_abandon_minutes" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[abandon_minutes]" value="<?php echo esc_attr( $s['abandon_minutes'] ); ?>" class="small-text" /></td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Enabled', 'cartrenew-woocommerce' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Enabled', 'cartrenew-for-woocommerce' ); ?></th>
 						<td>
 							<label>
 								<input type="checkbox" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[enabled]" value="1" <?php checked( $s['enabled'], 1 ); ?> />
-								<?php esc_html_e( 'Track carts and send recovery messages', 'cartrenew-woocommerce' ); ?>
+								<?php esc_html_e( 'Track carts and send recovery messages', 'cartrenew-for-woocommerce' ); ?>
 							</label>
 						</td>
 					</tr>
