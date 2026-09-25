@@ -1,19 +1,19 @@
-=== CartRenew for WooCommerce ===
+=== CartRenew for WooCommerce - Abandoned Cart Recovery ===
 Contributors: cartrenew
 Tags: woocommerce, abandoned cart, whatsapp, cart recovery, cart abandonment
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 0.1.2
+Stable tag: 0.1.4
 Requires PHP: 7.4
 Requires Plugins: woocommerce
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Recover abandoned WooCommerce carts by sending automated WhatsApp reminders to customers who leave items behind.
+Every day, 70% of WooCommerce carts are abandoned. WhatsApp recovery gets 90%+ open rates vs 20% for email. Automate it with CartRenew.
 
 == Description ==
 
-CartRenew for WooCommerce helps store owners recover lost revenue by automatically sending WhatsApp reminders to customers who abandon their shopping carts.
+Every day, 70% of WooCommerce carts are abandoned. WhatsApp recovery gets 90%+ open rates vs ~20% for email. CartRenew automates it all.
 
 **How it works:**
 
@@ -44,6 +44,14 @@ CartRenew for WooCommerce helps store owners recover lost revenue by automatical
 2. Visit [cartrenew.com/en/woocommerce/connect](https://www.cartrenew.com/en/woocommerce/connect) to create your free account and get your Store ID and API Key.
 3. In your WordPress admin, go to **WooCommerce → CartRenew** and enter your Store ID and API Key.
 4. Save changes and start recovering abandoned carts!
+
+== External services ==
+
+This plugin connects to CartRenew (https://www.cartrenew.com) to send abandoned-cart recovery messages via WhatsApp.
+
+It sends the following data when a cart is abandoned: store ID, cart contents (items and value), and the customer's phone number (only if they have opted in via the consent checkbox on the cart page).
+
+This service is provided by CartRenew. [Terms of Service](https://www.cartrenew.com/terms) | [Privacy Policy](https://www.cartrenew.com/privacy)
 
 == Installation ==
 
@@ -81,7 +89,11 @@ Phone numbers and cart data are stored in your WordPress database (`wp_cartrenew
 = Which countries are supported? =
 
 CartRenew supports WhatsApp delivery globally. Phone numbers entered without a country code are automatically prefixed based on your WooCommerce store settings.
+= Does this use the WhatsApp Business API? =
+Yes, CartRenew uses the official WhatsApp Business API to deliver recovery messages reliably and in compliance with WhatsApp's messaging policies.
 
+= Is CartRenew GDPR compliant? =
+Yes. CartRenew's consent-first design (explicit opt-in checkbox) and secure data storage help your store stay compliant with GDPR and other data protection regulations.
 == Screenshots ==
 
 1. WhatsApp consent form on the WooCommerce cart page
@@ -89,6 +101,9 @@ CartRenew supports WhatsApp delivery globally. Phone numbers entered without a c
 3. CartRenew dashboard showing recovery analytics
 
 == Changelog ==
+= 0.1.4 =
+* Updated plugin name for guideline compliance
+* Added External services disclosure
 
 = 0.1.2 =
 * Fixed phone number format — automatically adds country code prefix for 10-digit numbers
