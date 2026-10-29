@@ -3,7 +3,7 @@ Contributors: cartrenew
 Tags: woocommerce, abandoned cart, whatsapp, cart recovery, cart abandonment
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 0.1.6
+Stable tag: 0.2.0
 Requires PHP: 7.4
 Requires Plugins: woocommerce
 License: GPLv2 or later
@@ -119,6 +119,9 @@ Deleting the plugin from the Plugins screen removes the `wp_cartrenew_carts` tab
 3. WhatsApp opt-in at checkout, using the billing phone number
 
 == Changelog ==
+= 0.2.0 =
+* New: "Recovery results" panel on the CartRenew settings page. See reminders sent, carts recovered, recovered revenue and, if you enter your cost per reminder, your return on it.
+
 = 0.1.6 =
 * Fixed: on the block-based WooCommerce cart the WhatsApp opt-in box could overlap the cart items. It now sits under the items.
 
@@ -157,6 +160,9 @@ Deleting the plugin from the Plugins screen removes the `wp_cartrenew_carts` tab
 * CartRenew API integration for WhatsApp message delivery
 
 == Upgrade Notice ==
+= 0.2.0 =
+Adds a Recovery results panel so you can see how much revenue your WhatsApp reminders bring back.
+
 = 0.1.6 =
 Fixes the WhatsApp opt-in box overlapping the cart on the block-based WooCommerce cart.
 
