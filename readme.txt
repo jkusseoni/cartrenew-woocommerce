@@ -78,6 +78,10 @@ Yes. CartRenew for WooCommerce is compatible with both the classic shortcode-bas
 
 Yes. The plugin adds an explicit opt-in checkbox (never pre-ticked) to the cart page, with a phone number field, and to the checkout page, where it uses the billing phone number. CartRenew only sends messages to customers who have provided their number and checked the consent box.
 
+= Does the WhatsApp link work if the customer opens it on another phone or browser? =
+
+Yes. The link contains a private, random token. Opening it rebuilds the saved cart (products, variations and quantities that are still in stock) and takes the customer to checkout. If the customer already has items in their cart, those are left untouched. Links stop working after 7 days.
+
 = What happens if the customer completes their order? =
 
 CartRenew automatically detects the completed purchase and cancels any pending recovery message for that cart.
@@ -119,6 +123,7 @@ Deleting the plugin from the Plugins screen removes the `wp_cartrenew_carts` tab
 * New: "Connect with one click" on the settings page creates your CartRenew store and fills in your Store ID and API Key.
 * New: WhatsApp opt-in at checkout (classic and block checkout), using the billing phone number and first name.
 * New: redirect to the settings page after activation and a notice until the store is connected.
+* New: the link in the WhatsApp message now rebuilds the shopper's cart wherever it is opened (another browser or device) and sends them to checkout. Links expire after 7 days and never restore an order that was already placed.
 * New: optional feedback form when deactivating (nothing is sent unless you submit it).
 * New: deleting the plugin now removes its database table and settings.
 * Improved: carts are no longer marked as failed while the plugin is not connected yet.

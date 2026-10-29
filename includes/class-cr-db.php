@@ -39,8 +39,10 @@ class CartRenew_WC_DB {
 			last_activity DATETIME NOT NULL,
 			created_at DATETIME NOT NULL,
 			sent_at DATETIME NULL,
+			restore_token VARCHAR(64) NULL,
 			PRIMARY KEY  (id),
 			KEY cart_key (cart_key),
+			KEY restore_token (restore_token),
 			KEY status (status),
 			KEY phone_number (phone_number)
 		) {$charset_collate};";
@@ -81,6 +83,7 @@ class CartRenew_WC_DB {
 		}
 
 		$data['cart_key']      = $cart_key;
+		$data['restore_token'] = wp_generate_password( 32, false );
 		$data['last_activity'] = $now;
 		$data['created_at']    = $now;
 		if ( empty( $data['status'] ) ) {
@@ -104,17 +107,54 @@ class CartRenew_WC_DB {
 	}
 
 	/**
+	 * "$seconds ago" as a DATETIME string in the site's local time.
+	 *
+	 * last_activity is stored with current_time( 'mysql' ), i.e. local time
+	 * (UTC + gmt_offset), so the offset is ADDED to the UTC timestamp.
+	 */
+	public static function local_cutoff( $seconds ) {
+		$offset = (int) round( (float) get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
+		return gmdate( 'Y-m-d H:i:s', time() + $offset - (int) $seconds );
+	}
+
+	public static function get_by_token( $token ) {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom table, no core API available
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- transient cart data, caching not beneficial
+		return $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}cartrenew_carts WHERE restore_token = %s LIMIT 1",
+				$token
+			)
+		);
+	}
+
+	/**
+	 * Rows created before restore links existed have no token yet.
+	 */
+	public static function ensure_token( $cart_row ) {
+		global $wpdb;
+
+		if ( ! empty( $cart_row->restore_token ) ) {
+			return $cart_row->restore_token;
+		}
+
+		$token = wp_generate_password( 32, false );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom table, no core API available
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- transient cart data, caching not beneficial
+		$wpdb->update( self::table_name(), array( 'restore_token' => $token ), array( 'id' => $cart_row->id ) );
+		return $token;
+	}
+
+	/**
 	 * Carts eligible for the abandonment webhook:
 	 * has phone + consent, still "tracking", inactive for >= $minutes.
 	 */
 	public static function get_abandoned_carts( $minutes = 20, $limit = 50 ) {
 		global $wpdb;
 
-		// last_activity is stored with current_time( 'mysql' ), i.e. in the site's
-		// local time (UTC + gmt_offset). The cutoff must be in the same local time,
-		// so the offset is ADDED to the UTC timestamp (it used to be subtracted).
-		$offset = (int) round( (float) get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
-		$cutoff = gmdate( 'Y-m-d H:i:s', time() + $offset - ( $minutes * 60 ) );
+		$cutoff = self::local_cutoff( $minutes * 60 );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom table, no core API available
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- transient cart data, caching not beneficial

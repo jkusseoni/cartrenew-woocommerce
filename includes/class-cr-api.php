@@ -22,14 +22,28 @@ class CartRenew_WC_API {
 
 		$endpoint = trailingslashit( $settings['api_base'] ) . 'abandoned-cart';
 
+		// Send only what the message needs (no product ids / variation data).
+		$items = array();
+		$saved = json_decode( (string) $cart_row->cart_contents, true );
+		foreach ( is_array( $saved ) ? $saved : array() as $item ) {
+			$items[] = array(
+				'name'     => isset( $item['name'] ) ? $item['name'] : '',
+				'quantity' => isset( $item['quantity'] ) ? $item['quantity'] : 1,
+				'price'    => isset( $item['price'] ) ? $item['price'] : 0,
+			);
+		}
+
+		// Link that rebuilds the cart wherever it is opened.
+		$token = CartRenew_WC_DB::ensure_token( $cart_row );
+
 		$body = array(
 			'store_id'      => $settings['store_id'],
 			'cart_key'      => $cart_row->cart_key,
 			'customer_name' => $cart_row->customer_name,
 			'phone_number'  => $cart_row->phone_number,
 			'cart_total'    => $cart_row->cart_total,
-			'checkout_url'  => $cart_row->checkout_url,
-			'cart_contents' => json_decode( $cart_row->cart_contents, true ),
+			'checkout_url'  => CartRenew_WC_Restore::url_for( $token ),
+			'cart_contents' => $items,
 			'site_url'      => home_url(),
 		);
 

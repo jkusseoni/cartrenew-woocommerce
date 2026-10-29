@@ -48,11 +48,19 @@ function cartrenew_wc_init() {
 	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-api.php';
 	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-cron.php';
 	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-feedback.php';
+	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-restore.php';
+
+	// Plugin updates don't re-run the activation hook: add new table columns here.
+	if ( get_option( 'cartrenew_wc_db_version' ) !== CARTRENEW_WC_VERSION ) {
+		CartRenew_WC_DB::create_table();
+		update_option( 'cartrenew_wc_db_version', CARTRENEW_WC_VERSION );
+	}
 
 	CartRenew_WC_Settings::init();
 	CartRenew_WC_Consent::init();
 	CartRenew_WC_Tracker::init();
 	CartRenew_WC_Cron::init();
+	CartRenew_WC_Restore::init();
 
 	if ( is_admin() ) {
 		CartRenew_WC_Feedback::init();
