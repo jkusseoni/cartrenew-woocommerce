@@ -160,7 +160,7 @@ class CartRenew_WC_Settings {
 			return;
 		}
 		?>
-		<div class="notice notice-warning">
+		<div class="notice notice-warning is-dismissible">
 			<p>
 				<strong><?php esc_html_e( 'CartRenew free message limit reached.', 'cartrenew-for-woocommerce' ); ?></strong>
 				<?php esc_html_e( 'WhatsApp recovery messages are paused until you upgrade your plan.', 'cartrenew-for-woocommerce' ); ?>
@@ -184,7 +184,7 @@ class CartRenew_WC_Settings {
 			return;
 		}
 		?>
-		<div class="notice notice-warning">
+		<div class="notice notice-warning is-dismissible">
 			<p>
 				<strong><?php esc_html_e( 'CartRenew is not connected yet.', 'cartrenew-for-woocommerce' ); ?></strong>
 				<?php esc_html_e( 'Abandoned-cart WhatsApp messages will not be sent until you add your Store ID and API Key.', 'cartrenew-for-woocommerce' ); ?>

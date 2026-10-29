@@ -55,6 +55,8 @@ When you click "Connect with one click" on the settings page, the plugin also se
 
 When you deactivate the plugin, an optional feedback form asks why. If, and only if, you choose a reason and click "Submit & Deactivate", the plugin sends your selected reason, your optional comment, the plugin version and your WordPress and WooCommerce versions to CartRenew (https://www.cartrenew.com/api/woocommerce/feedback). "Skip & Deactivate" sends nothing.
 
+CartRenew is a third-party service (account required). The plugin itself has no locked or time-limited features: it captures consent and sends cart data to the service, and the service decides how many WhatsApp messages your CartRenew plan includes. When your plan's message allowance is used up, the plugin shows a dismissible admin notice with an upgrade link.
+
 This service is provided by CartRenew. [Terms of Service](https://www.cartrenew.com/terms) | [Privacy Policy](https://www.cartrenew.com/privacy)
 
 == Installation ==
