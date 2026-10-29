@@ -22,6 +22,12 @@ class CartRenew_WC_Cron {
 			return;
 		}
 
+		// Not connected yet: leave carts in "tracking" so they are sent once the
+		// merchant saves their Store ID + API key (instead of burning them as failed).
+		if ( empty( $settings['store_id'] ) || empty( $settings['api_key'] ) ) {
+			return;
+		}
+
 		$minutes = ! empty( $settings['abandon_minutes'] ) ? absint( $settings['abandon_minutes'] ) : 20;
 		$carts   = CartRenew_WC_DB::get_abandoned_carts( $minutes );
 

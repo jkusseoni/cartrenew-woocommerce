@@ -110,7 +110,11 @@ class CartRenew_WC_DB {
 	public static function get_abandoned_carts( $minutes = 20, $limit = 50 ) {
 		global $wpdb;
 
-		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( $minutes * 60 ) - ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS ) );
+		// last_activity is stored with current_time( 'mysql' ), i.e. in the site's
+		// local time (UTC + gmt_offset). The cutoff must be in the same local time,
+		// so the offset is ADDED to the UTC timestamp (it used to be subtracted).
+		$offset = (int) round( (float) get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() + $offset - ( $minutes * 60 ) );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom table, no core API available
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- transient cart data, caching not beneficial

@@ -62,6 +62,9 @@ function cartrenew_wc_activate() {
 	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-db.php';
 	CartRenew_WC_DB::create_table();
 
+	// Send the merchant straight to the settings page on first activation.
+	set_transient( 'cartrenew_wc_activation_redirect', 1, 60 );
+
 	if ( ! wp_next_scheduled( 'cartrenew_wc_check_abandoned' ) ) {
 		wp_schedule_event( time(), 'cartrenew_five_minutes', 'cartrenew_wc_check_abandoned' );
 	}

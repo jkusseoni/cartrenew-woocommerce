@@ -69,12 +69,22 @@ jQuery(function ($) {
 		var saveTimer = null;
 
 		function normalizePhone(raw) {
-			var digits = raw.replace(/\D/g, '');
-			if (digits.length === 10) {
-				return '91' + digits;
+			var trimmed = $.trim(raw);
+			var digits = trimmed.replace(/\D/g, '');
+			var cc = (window.CartRenewConsent && CartRenewConsent.default_cc) || '';
+
+			// Already international ("+44 ..." or "0044 ...") — keep as typed.
+			if (trimmed.charAt(0) === '+') {
+				return digits;
 			}
-			if (digits.length === 11 && digits.charAt(0) === '0') {
-				return '91' + digits.substring(1);
+			if (digits.indexOf('00') === 0) {
+				return digits.substring(2);
+			}
+
+			// National number: drop the trunk "0" and add the store country's code.
+			digits = digits.replace(/^0+/, '');
+			if (cc && digits.length > 0 && digits.length <= 10) {
+				return cc + digits;
 			}
 			return digits;
 		}

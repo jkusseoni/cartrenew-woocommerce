@@ -14,6 +14,60 @@ class CartRenew_WC_Settings {
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'add_menu' ) );
 		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
+		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect_after_activation' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'maybe_show_connect_notice' ) );
+	}
+
+	public static function settings_url() {
+		return admin_url( 'admin.php?page=cartrenew-settings' );
+	}
+
+	public static function is_connected() {
+		$s = self::get_settings();
+		return ! empty( $s['store_id'] ) && ! empty( $s['api_key'] );
+	}
+
+	/**
+	 * One-time redirect to the settings page right after activation.
+	 */
+	public static function maybe_redirect_after_activation() {
+		if ( ! get_transient( 'cartrenew_wc_activation_redirect' ) ) {
+			return;
+		}
+		delete_transient( 'cartrenew_wc_activation_redirect' );
+
+		// Skip bulk activations, network admin and users who can't configure it.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only flag set by WordPress core.
+		if ( isset( $_GET['activate-multi'] ) || is_network_admin() || ! current_user_can( 'manage_woocommerce' ) ) {
+			return;
+		}
+
+		wp_safe_redirect( self::settings_url() );
+		exit;
+	}
+
+	/**
+	 * Reminder on admin screens until the Store ID + API key are saved.
+	 */
+	public static function maybe_show_connect_notice() {
+		if ( self::is_connected() || ! current_user_can( 'manage_woocommerce' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check.
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		if ( 'cartrenew-settings' === $page ) {
+			return;
+		}
+		?>
+		<div class="notice notice-warning">
+			<p>
+				<strong><?php esc_html_e( 'CartRenew is not connected yet.', 'cartrenew-for-woocommerce' ); ?></strong>
+				<?php esc_html_e( 'Abandoned-cart WhatsApp messages will not be sent until you add your Store ID and API Key.', 'cartrenew-for-woocommerce' ); ?>
+				<a href="<?php echo esc_url( self::settings_url() ); ?>"><?php esc_html_e( 'Connect now', 'cartrenew-for-woocommerce' ); ?></a>
+			</p>
+		</div>
+		<?php
 	}
 
 	public static function add_menu() {
@@ -83,6 +137,17 @@ class CartRenew_WC_Settings {
 		<div class="wrap">
 			<h1><?php esc_html_e( 'CartRenew Settings', 'cartrenew-for-woocommerce' ); ?></h1>
 			<p><?php esc_html_e( 'Connect this store to your CartRenew account to enable WhatsApp abandoned-cart recovery.', 'cartrenew-for-woocommerce' ); ?></p>
+			<?php if ( ! self::is_connected() ) : ?>
+				<div class="notice notice-info inline">
+					<p>
+						<strong><?php esc_html_e( 'Setup (2 minutes):', 'cartrenew-for-woocommerce' ); ?></strong>
+						<?php esc_html_e( '1) Create your free CartRenew account and copy your Store ID and API Key. 2) Paste them below and click Save Changes.', 'cartrenew-for-woocommerce' ); ?>
+						<a href="https://www.cartrenew.com/en/woocommerce/connect" target="_blank" rel="noopener"><?php esc_html_e( 'Get my Store ID and API Key', 'cartrenew-for-woocommerce' ); ?></a>
+					</p>
+				</div>
+			<?php else : ?>
+				<div class="notice notice-success inline"><p><?php esc_html_e( 'Connected. Carts with a phone number and WhatsApp consent are tracked and recovered automatically.', 'cartrenew-for-woocommerce' ); ?></p></div>
+			<?php endif; ?>
 			<form method="post" action="options.php">
 				<?php settings_fields( self::OPTION_KEY ); ?>
 				<table class="form-table" role="presentation">

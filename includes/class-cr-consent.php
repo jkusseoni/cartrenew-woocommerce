@@ -46,8 +46,24 @@ class CartRenew_WC_Consent {
 			array(
 				'ajax_url' => admin_url( 'admin-ajax.php' ),
 				'nonce'    => wp_create_nonce( 'cartrenew_consent' ),
+				'default_cc' => self::get_default_calling_code(),
 			)
 		);
+	}
+
+	/**
+	 * Calling code (digits only, e.g. "91") of the store's base country, used
+	 * to prefix numbers customers type without a country code.
+	 */
+	private static function get_default_calling_code() {
+		if ( ! function_exists( 'WC' ) || ! WC()->countries ) {
+			return '';
+		}
+		$code = WC()->countries->get_country_calling_code( WC()->countries->get_base_country() );
+		if ( is_array( $code ) ) {
+			$code = reset( $code );
+		}
+		return preg_replace( '/\D/', '', (string) $code );
 	}
 
 	/**
