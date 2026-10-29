@@ -9,11 +9,11 @@ Requires Plugins: woocommerce
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Every day, 70% of WooCommerce carts are abandoned. WhatsApp recovery gets 90%+ open rates vs 20% for email. Automate it with CartRenew.
+Recover abandoned WooCommerce carts with automatic WhatsApp reminders, sent only to shoppers who opted in.
 
 == Description ==
 
-Every day, 70% of WooCommerce carts are abandoned. WhatsApp recovery gets 90%+ open rates vs ~20% for email. CartRenew automates it all.
+Most shoppers who add items to a cart never complete the purchase. CartRenew brings them back with a WhatsApp reminder and a direct link to their cart, sent only to customers who gave their number and consent.
 
 **How it works:**
 
@@ -26,7 +26,7 @@ Every day, 70% of WooCommerce carts are abandoned. WhatsApp recovery gets 90%+ o
 * **WhatsApp Recovery** — Automated messages sent via WhatsApp using the CartRenew platform.
 * **Consent-First** — Phone number and opt-in captured on the cart page or at checkout with explicit customer consent (checkbox is never pre-ticked).
 * **WooCommerce Native** — Works with both classic shortcode-based and Gutenberg block-based WooCommerce cart templates.
-* **Easy Setup** — No coding required. Install plugin, enter your Store ID and API Key, done.
+* **Easy Setup** — No coding required. Install the plugin and click "Connect with one click" (or paste your Store ID and API Key).
 * **Configurable Wait Time** — Set how long to wait before sending a recovery message (5–180 minutes).
 * **Automatic Recovery Detection** — If a customer completes their order, the recovery message is automatically cancelled.
 * **Dashboard Analytics** — Monitor cart recoveries and performance from the CartRenew dashboard.
@@ -49,9 +49,11 @@ Every day, 70% of WooCommerce carts are abandoned. WhatsApp recovery gets 90%+ o
 
 This plugin connects to CartRenew (https://www.cartrenew.com) to send abandoned-cart recovery messages via WhatsApp.
 
-It sends the following data when a cart is abandoned: store ID, cart contents (items and value), and the customer's phone number (only if they have opted in via the consent checkbox on the cart page).
+It sends the following data when a cart is abandoned: store ID, cart contents (items and value), the customer's first name (if provided) and the customer's phone number (only if they have opted in via the consent checkbox on the cart or checkout page).
 
 When you click "Connect with one click" on the settings page, the plugin also sends the email address you enter, your site URL and your site name to CartRenew (https://www.cartrenew.com/api/woocommerce/register-store) once, to create your store and return your Store ID and API Key. Nothing is sent until you click that button.
+
+When you deactivate the plugin, an optional feedback form asks why. If, and only if, you choose a reason and click "Submit & Deactivate", the plugin sends your selected reason, your optional comment, the plugin version and your WordPress and WooCommerce versions to CartRenew (https://www.cartrenew.com/api/woocommerce/feedback). "Skip & Deactivate" sends nothing.
 
 This service is provided by CartRenew. [Terms of Service](https://www.cartrenew.com/terms) | [Privacy Policy](https://www.cartrenew.com/privacy)
 
@@ -59,8 +61,8 @@ This service is provided by CartRenew. [Terms of Service](https://www.cartrenew.
 
 1. Upload the `cartrenew-woocommerce` folder to the `/wp-content/plugins/` directory, or install the plugin directly through the WordPress plugins screen.
 2. Activate the plugin through the **Plugins** screen in WordPress.
-3. Go to **WooCommerce → CartRenew** to configure your Store ID and API Key.
-4. Get your credentials at [cartrenew.com/en/woocommerce/connect](https://www.cartrenew.com/en/woocommerce/connect).
+3. Go to **WooCommerce → CartRenew** and click **Connect with one click**, or paste your Store ID and API Key.
+4. Existing account? Find your credentials at [cartrenew.com/en/woocommerce/connect](https://www.cartrenew.com/en/woocommerce/connect).
 
 == Frequently Asked Questions ==
 
@@ -74,7 +76,7 @@ Yes. CartRenew for WooCommerce is compatible with both the classic shortcode-bas
 
 = Is customer consent required before sending WhatsApp messages? =
 
-Yes. The plugin adds a phone number field and an explicit opt-in checkbox to the cart page. CartRenew only sends messages to customers who have provided their number and checked the consent box.
+Yes. The plugin adds an explicit opt-in checkbox (never pre-ticked) to the cart page, with a phone number field, and to the checkout page, where it uses the billing phone number. CartRenew only sends messages to customers who have provided their number and checked the consent box.
 
 = What happens if the customer completes their order? =
 
@@ -90,12 +92,20 @@ Phone numbers and cart data are stored in your WordPress database (`wp_cartrenew
 
 = Which countries are supported? =
 
-CartRenew supports WhatsApp delivery globally. Phone numbers entered without a country code are automatically prefixed based on your WooCommerce store settings.
-= Does this use the WhatsApp Business API? =
-Yes, CartRenew uses the official WhatsApp Business API to deliver recovery messages reliably and in compliance with WhatsApp's messaging policies.
+Numbers typed without a country code get the calling code of the billing country at checkout, or of your WooCommerce store's country on the cart page. Numbers typed with a "+" or "00" prefix are used as entered.
 
-= Is CartRenew GDPR compliant? =
-Yes. CartRenew's consent-first design (explicit opt-in checkbox) and secure data storage help your store stay compliant with GDPR and other data protection regulations.
+= Does this use the WhatsApp Business API? =
+
+Yes, CartRenew uses the official WhatsApp Business API to deliver recovery messages in line with WhatsApp's messaging policies.
+
+= Does this help with GDPR and other privacy rules? =
+
+The plugin only collects a phone number after an explicit, unticked-by-default opt-in, and removes its data table when you delete the plugin. Whether your store meets GDPR or other local rules also depends on your own privacy policy and how you use the data, so please check with your legal adviser.
+
+= What happens to my data if I delete the plugin? =
+
+Deleting the plugin from the Plugins screen removes the `wp_cartrenew_carts` table and the plugin settings from your database.
+
 == Screenshots ==
 
 1. WhatsApp consent form on the WooCommerce cart page
@@ -109,7 +119,10 @@ Yes. CartRenew's consent-first design (explicit opt-in checkbox) and secure data
 * New: "Connect with one click" on the settings page creates your CartRenew store and fills in your Store ID and API Key.
 * New: WhatsApp opt-in at checkout (classic and block checkout), using the billing phone number and first name.
 * New: redirect to the settings page after activation and a notice until the store is connected.
+* New: optional feedback form when deactivating (nothing is sent unless you submit it).
+* New: deleting the plugin now removes its database table and settings.
 * Improved: carts are no longer marked as failed while the plugin is not connected yet.
+* Improved: readme wording and FAQ formatting.
 
 = 0.1.4 =
 * Updated plugin name for guideline compliance

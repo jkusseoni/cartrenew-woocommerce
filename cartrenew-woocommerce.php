@@ -47,11 +47,16 @@ function cartrenew_wc_init() {
 	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-tracker.php';
 	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-api.php';
 	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-cron.php';
+	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-feedback.php';
 
 	CartRenew_WC_Settings::init();
 	CartRenew_WC_Consent::init();
 	CartRenew_WC_Tracker::init();
 	CartRenew_WC_Cron::init();
+
+	if ( is_admin() ) {
+		CartRenew_WC_Feedback::init();
+	}
 }
 add_action( 'plugins_loaded', 'cartrenew_wc_init' );
 
