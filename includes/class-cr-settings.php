@@ -16,6 +16,105 @@ class CartRenew_WC_Settings {
 		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
 		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect_after_activation' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'maybe_show_connect_notice' ) );
+		add_action( 'admin_post_cartrenew_wc_connect', array( __CLASS__, 'handle_connect' ) );
+	}
+
+	/**
+	 * Short-lived admin message (per user) shown on the settings page after the
+	 * one-click connect redirect.
+	 */
+	private static function flash( $type, $message ) {
+		set_transient(
+			'cartrenew_wc_flash_' . get_current_user_id(),
+			array(
+				'type'    => $type,
+				'message' => $message,
+			),
+			60
+		);
+	}
+
+	private static function save_credentials( $store_id, $api_key = null ) {
+		$settings             = self::get_settings();
+		$settings['store_id'] = sanitize_text_field( $store_id );
+		if ( null !== $api_key ) {
+			$settings['api_key'] = sanitize_text_field( $api_key );
+		}
+		update_option( self::OPTION_KEY, $settings );
+	}
+
+	/**
+	 * "Connect with one click": registers this site with CartRenew and stores the
+	 * returned Store ID + API Key, so the merchant never has to copy them by hand.
+	 */
+	public static function handle_connect() {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_die( esc_html__( 'You do not have permission to do this.', 'cartrenew-for-woocommerce' ), '', array( 'response' => 403 ) );
+		}
+		check_admin_referer( 'cartrenew_wc_connect' );
+
+		$redirect = self::settings_url();
+		$email    = isset( $_POST['cartrenew_email'] ) ? sanitize_email( wp_unslash( $_POST['cartrenew_email'] ) ) : '';
+
+		if ( ! is_email( $email ) ) {
+			self::flash( 'error', __( 'Please enter a valid email address.', 'cartrenew-for-woocommerce' ) );
+			wp_safe_redirect( $redirect );
+			exit;
+		}
+
+		$settings = self::get_settings();
+		$response = wp_remote_post(
+			trailingslashit( $settings['api_base'] ) . 'register-store',
+			array(
+				'timeout' => 20,
+				'headers' => array( 'Content-Type' => 'application/json' ),
+				'body'    => wp_json_encode(
+					array(
+						'email'      => $email,
+						'site_url'   => home_url(),
+						'store_name' => get_bloginfo( 'name' ),
+					)
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			self::flash(
+				'error',
+				sprintf(
+					/* translators: %s: error message from WordPress HTTP API */
+					__( 'Could not reach CartRenew: %s. You can still enter your credentials manually below.', 'cartrenew-for-woocommerce' ),
+					$response->get_error_message()
+				)
+			);
+			wp_safe_redirect( $redirect );
+			exit;
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data = is_array( $data ) ? $data : array();
+
+		if ( 200 === $code && ! empty( $data['store_id'] ) && ! empty( $data['api_key'] ) ) {
+			self::save_credentials( $data['store_id'], $data['api_key'] );
+			self::flash( 'success', __( 'Connected! Your Store ID and API Key were saved automatically.', 'cartrenew-for-woocommerce' ) );
+		} elseif ( 409 === $code && ! empty( $data['store_id'] ) ) {
+			// Site already registered: the API key is never returned a second time.
+			self::save_credentials( $data['store_id'] );
+			self::flash( 'warning', __( 'This site is already registered with CartRenew. Your Store ID was filled in; copy your API Key from your CartRenew dashboard and paste it below.', 'cartrenew-for-woocommerce' ) );
+		} else {
+			self::flash(
+				'error',
+				sprintf(
+					/* translators: %d: HTTP status code */
+					__( 'CartRenew could not register this store (HTTP %d). Please enter your Store ID and API Key manually below.', 'cartrenew-for-woocommerce' ),
+					$code
+				)
+			);
+		}
+
+		wp_safe_redirect( $redirect );
+		exit;
 	}
 
 	public static function settings_url() {
@@ -137,12 +236,32 @@ class CartRenew_WC_Settings {
 		<div class="wrap">
 			<h1><?php esc_html_e( 'CartRenew Settings', 'cartrenew-for-woocommerce' ); ?></h1>
 			<p><?php esc_html_e( 'Connect this store to your CartRenew account to enable WhatsApp abandoned-cart recovery.', 'cartrenew-for-woocommerce' ); ?></p>
+			<?php
+			$flash_key = 'cartrenew_wc_flash_' . get_current_user_id();
+			$flash     = get_transient( $flash_key );
+			if ( $flash ) {
+				delete_transient( $flash_key );
+				$allowed = array( 'success', 'warning', 'error' );
+				$type    = in_array( $flash['type'], $allowed, true ) ? $flash['type'] : 'info';
+				?>
+				<div class="notice notice-<?php echo esc_attr( $type ); ?> inline"><p><?php echo esc_html( $flash['message'] ); ?></p></div>
+			<?php } ?>
 			<?php if ( ! self::is_connected() ) : ?>
-				<div class="notice notice-info inline">
-					<p>
-						<strong><?php esc_html_e( 'Setup (2 minutes):', 'cartrenew-for-woocommerce' ); ?></strong>
-						<?php esc_html_e( '1) Create your free CartRenew account and copy your Store ID and API Key. 2) Paste them below and click Save Changes.', 'cartrenew-for-woocommerce' ); ?>
-						<a href="https://www.cartrenew.com/en/woocommerce/connect" target="_blank" rel="noopener"><?php esc_html_e( 'Get my Store ID and API Key', 'cartrenew-for-woocommerce' ); ?></a>
+				<div class="card" style="max-width:640px;margin:16px 0;padding:8px 20px 16px;">
+					<h2><?php esc_html_e( 'Connect in one click', 'cartrenew-for-woocommerce' ); ?></h2>
+					<p><?php esc_html_e( 'Enter your email and we will create your CartRenew store and fill in your credentials automatically.', 'cartrenew-for-woocommerce' ); ?></p>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="cartrenew_wc_connect" />
+						<?php wp_nonce_field( 'cartrenew_wc_connect' ); ?>
+						<p>
+							<label for="cartrenew_email" class="screen-reader-text"><?php esc_html_e( 'Email address', 'cartrenew-for-woocommerce' ); ?></label>
+							<input type="email" id="cartrenew_email" name="cartrenew_email" class="regular-text" required value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" />
+						</p>
+						<?php submit_button( __( 'Connect with one click', 'cartrenew-for-woocommerce' ), 'primary', 'submit', false ); ?>
+					</form>
+					<p class="description" style="margin-top:12px;">
+						<?php esc_html_e( 'Already have an account? Enter your Store ID and API Key manually below.', 'cartrenew-for-woocommerce' ); ?>
+						<a href="https://www.cartrenew.com/en/woocommerce/connect" target="_blank" rel="noopener"><?php esc_html_e( 'Find my credentials', 'cartrenew-for-woocommerce' ); ?></a>
 					</p>
 				</div>
 			<?php else : ?>

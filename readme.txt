@@ -41,15 +41,17 @@ Every day, 70% of WooCommerce carts are abandoned. WhatsApp recovery gets 90%+ o
 **Getting Started:**
 
 1. Install and activate this plugin.
-2. Visit [cartrenew.com/en/woocommerce/connect](https://www.cartrenew.com/en/woocommerce/connect) to create your free account and get your Store ID and API Key.
-3. In your WordPress admin, go to **WooCommerce → CartRenew** and enter your Store ID and API Key.
-4. Save changes and start recovering abandoned carts!
+2. You are taken to **WooCommerce → CartRenew** automatically. Enter your email and click **Connect with one click**: your Store ID and API Key are filled in for you.
+3. Already have an account? Paste your Store ID and API Key manually (find them at [cartrenew.com/en/woocommerce/connect](https://www.cartrenew.com/en/woocommerce/connect)) and save.
+4. Start recovering abandoned carts!
 
 == External services ==
 
 This plugin connects to CartRenew (https://www.cartrenew.com) to send abandoned-cart recovery messages via WhatsApp.
 
 It sends the following data when a cart is abandoned: store ID, cart contents (items and value), and the customer's phone number (only if they have opted in via the consent checkbox on the cart page).
+
+When you click "Connect with one click" on the settings page, the plugin also sends the email address you enter, your site URL and your site name to CartRenew (https://www.cartrenew.com/api/woocommerce/register-store) once, to create your store and return your Store ID and API Key. Nothing is sent until you click that button.
 
 This service is provided by CartRenew. [Terms of Service](https://www.cartrenew.com/terms) | [Privacy Policy](https://www.cartrenew.com/privacy)
 

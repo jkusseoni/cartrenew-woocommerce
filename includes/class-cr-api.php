@@ -6,12 +6,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Sends an abandoned-cart payload to the CartRenew backend.
  *
- * NOTE: this posts to {api_base}/abandoned-cart — that endpoint does not
- * exist yet on the CartRenew Next.js backend and needs to be built there.
- * It should: verify store_id + api_key, look up (or auto-create) the
- * WooCommerce store record, then enqueue the same Meta Cloud API send used
- * for Shopify (template "abandoned_cart_reminder", bodyVariables
- * [customer_name, checkout_url]) — same shape as the Shopify webhook path.
+ * Posts to {api_base}/abandoned-cart (app/api/woocommerce/abandoned-cart in the
+ * CartRenew backend). The backend verifies store_id + api_key (Bearer token),
+ * de-duplicates per cart_key, normalises the phone to E.164 and sends the
+ * WhatsApp recovery template.
  */
 class CartRenew_WC_API {
 
