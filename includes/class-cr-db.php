@@ -180,4 +180,48 @@ class CartRenew_WC_DB {
 			)
 		);
 	}
+
+	/**
+	 * Recovery results for the admin panel.
+	 *
+	 * Only carts that actually got a reminder count (sent_at is set), so a
+	 * shopper who simply bought without ever being messaged is never credited.
+	 * "send_failed" rows also carry sent_at, so they are excluded by status.
+	 *
+	 * @param int $days Look-back window by reminder date; 0 = all time.
+	 * @return array{sent:int,recovered:int,revenue:float,rate:float}
+	 */
+	public static function get_recovery_stats( $days = 30 ) {
+		global $wpdb;
+
+		$days = absint( $days );
+		$args = array( 'recovered' );
+		$sql  = "SELECT COUNT(*) AS sent,
+				SUM(CASE WHEN status = %s THEN 1 ELSE 0 END) AS recovered,
+				SUM(CASE WHEN status = %s THEN COALESCE(cart_total, 0) ELSE 0 END) AS revenue
+			 FROM {$wpdb->prefix}cartrenew_carts
+			 WHERE sent_at IS NOT NULL
+			 AND status IN ('sent', 'recovered', 'opted_out')";
+		$args[] = 'recovered';
+		if ( $days > 0 ) {
+			$sql   .= ' AND sent_at >= %s';
+			$args[] = self::local_cutoff( $days * DAY_IN_SECONDS );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom table, no core API available
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- admin report, always fresh
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders are built above
+		$row = $wpdb->get_row( $wpdb->prepare( $sql, $args ) );
+
+		$sent      = $row ? (int) $row->sent : 0;
+		$recovered = $row ? (int) $row->recovered : 0;
+		$revenue   = $row ? (float) $row->revenue : 0.0;
+
+		return array(
+			'sent'      => $sent,
+			'recovered' => $recovered,
+			'revenue'   => $revenue,
+			'rate'      => $sent > 0 ? round( $recovered / $sent * 100, 1 ) : 0.0,
+		);
+	}
 }

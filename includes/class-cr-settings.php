@@ -235,6 +235,10 @@ class CartRenew_WC_Settings {
 				$sanitized['abandon_minutes'] = 180;
 			}
 		}
+		if ( isset( $input['message_cost'] ) ) {
+			$cost                     = (float) str_replace( ',', '.', (string) $input['message_cost'] );
+			$sanitized['message_cost'] = $cost > 0 ? round( $cost, 4 ) : 0;
+		}
 		$sanitized['enabled'] = ! empty( $input['enabled'] ) ? 1 : 0;
 		return $sanitized;
 	}
@@ -245,11 +249,73 @@ class CartRenew_WC_Settings {
 			'api_key'           => '',
 			'api_base'          => CARTRENEW_WC_DEFAULT_API_BASE,
 			'abandon_minutes'   => 20,
+			'message_cost'      => 0, // optional: what one reminder costs the merchant, for the results panel
 			'consent_default'   => 'unchecked', // 'checked' or 'unchecked'
 			'enabled'           => 1,
 		);
 		$saved = get_option( self::OPTION_KEY, array() );
 		return wp_parse_args( $saved, $defaults );
+	}
+
+
+	private static function money( $amount ) {
+		if ( function_exists( 'wc_price' ) ) {
+			return wp_kses_post( wc_price( $amount ) );
+		}
+		return esc_html( number_format( (float) $amount, 2 ) );
+	}
+
+	/**
+	 * "Recovery results" panel: reminders sent, carts recovered, revenue and,
+	 * if the merchant entered a cost per reminder, the return on that spend.
+	 */
+	private static function render_results( $s ) {
+		$allowed = array( 7, 30, 90, 0 );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display filter
+		$days = isset( $_GET['cr_days'] ) ? absint( wp_unslash( $_GET['cr_days'] ) ) : 30;
+		if ( ! in_array( $days, $allowed, true ) ) {
+			$days = 30;
+		}
+
+		$stats = CartRenew_WC_DB::get_recovery_stats( $days );
+		$cost  = (float) $s['message_cost'] * $stats['sent'];
+		$labels = array(
+			7  => __( 'Last 7 days', 'cartrenew-for-woocommerce' ),
+			30 => __( 'Last 30 days', 'cartrenew-for-woocommerce' ),
+			90 => __( 'Last 90 days', 'cartrenew-for-woocommerce' ),
+			0  => __( 'All time', 'cartrenew-for-woocommerce' ),
+		);
+		?>
+		<div class="card" style="max-width:640px;margin:16px 0;padding:8px 20px 16px;">
+			<h2><?php esc_html_e( 'Recovery results', 'cartrenew-for-woocommerce' ); ?></h2>
+			<p>
+				<?php foreach ( $labels as $d => $label ) : ?>
+					<?php if ( $d === $days ) : ?>
+						<strong><?php echo esc_html( $label ); ?></strong>
+					<?php else : ?>
+						<a href="<?php echo esc_url( add_query_arg( 'cr_days', $d, self::settings_url() ) ); ?>"><?php echo esc_html( $label ); ?></a>
+					<?php endif; ?>
+					&nbsp;
+				<?php endforeach; ?>
+			</p>
+			<?php if ( 0 === $stats['sent'] ) : ?>
+				<p><?php esc_html_e( 'No reminders sent in this period yet. Results appear after the first WhatsApp reminder goes out.', 'cartrenew-for-woocommerce' ); ?></p>
+			<?php else : ?>
+				<table class="widefat striped" role="presentation">
+					<tbody>
+						<tr><td><?php esc_html_e( 'Reminders sent', 'cartrenew-for-woocommerce' ); ?></td><td><strong><?php echo esc_html( number_format_i18n( $stats['sent'] ) ); ?></strong></td></tr>
+						<tr><td><?php esc_html_e( 'Carts recovered', 'cartrenew-for-woocommerce' ); ?></td><td><strong><?php echo esc_html( number_format_i18n( $stats['recovered'] ) ); ?></strong> (<?php echo esc_html( $stats['rate'] ); ?>%)</td></tr>
+						<tr><td><?php esc_html_e( 'Recovered revenue', 'cartrenew-for-woocommerce' ); ?></td><td><strong><?php echo self::money( $stats['revenue'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in money() ?></strong></td></tr>
+						<?php if ( $cost > 0 ) : ?>
+							<tr><td><?php esc_html_e( 'Reminder cost', 'cartrenew-for-woocommerce' ); ?></td><td><?php echo self::money( $cost ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in money() ?></td></tr>
+							<tr><td><?php esc_html_e( 'Revenue per 1 spent', 'cartrenew-for-woocommerce' ); ?></td><td><strong><?php echo esc_html( round( $stats['revenue'] / $cost, 1 ) ); ?>x</strong></td></tr>
+						<?php endif; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+			<p class="description"><?php esc_html_e( 'A cart counts as recovered when the shopper places an order after we sent them a reminder. Order totals are the cart value at the time.', 'cartrenew-for-woocommerce' ); ?></p>
+		</div>
+		<?php
 	}
 
 	public static function render_page() {
@@ -292,6 +358,7 @@ class CartRenew_WC_Settings {
 			<?php else : ?>
 				<div class="notice notice-success inline"><p><?php esc_html_e( 'Connected. Carts with a phone number and WhatsApp consent are tracked and recovered automatically.', 'cartrenew-for-woocommerce' ); ?></p></div>
 			<?php endif; ?>
+			<?php if ( self::is_connected() ) { self::render_results( $s ); } ?>
 			<form method="post" action="options.php">
 				<?php settings_fields( self::OPTION_KEY ); ?>
 				<table class="form-table" role="presentation">
@@ -313,6 +380,13 @@ class CartRenew_WC_Settings {
 					<tr>
 						<th scope="row"><label for="cr_abandon_minutes"><?php esc_html_e( 'Abandonment wait time (minutes)', 'cartrenew-for-woocommerce' ); ?></label></th>
 						<td><input type="number" min="5" max="180" id="cr_abandon_minutes" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[abandon_minutes]" value="<?php echo esc_attr( $s['abandon_minutes'] ); ?>" class="small-text" /></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="cr_message_cost"><?php esc_html_e( 'Cost per reminder (optional)', 'cartrenew-for-woocommerce' ); ?></label></th>
+						<td>
+							<input type="number" min="0" step="0.01" id="cr_message_cost" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[message_cost]" value="<?php echo esc_attr( $s['message_cost'] ); ?>" class="small-text" />
+							<p class="description"><?php esc_html_e( 'In your store currency. Only used to show your return in the results panel above; leave 0 to hide it.', 'cartrenew-for-woocommerce' ); ?></p>
+						</td>
 					</tr>
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Enabled', 'cartrenew-for-woocommerce' ); ?></th>

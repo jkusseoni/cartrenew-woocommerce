@@ -245,3 +245,31 @@ test( 'release: every PHP file lints and has the ABSPATH guard', function () {
 		}
 	}
 } );
+
+// ---- Recovery results panel ----
+test( 'results panel: hidden when not connected, empty state, then numbers and ROI', function () {
+	ob_start(); CartRenew_WC_Settings::render_page(); $a = ob_get_clean();
+	assert_false( false !== strpos( $a, 'Recovery results' ) );
+
+	configure_store();
+	ob_start(); CartRenew_WC_Settings::render_page(); $b = ob_get_clean();
+	assert_contains( 'No reminders sent in this period yet', $b );
+
+	$now = current_time( 'mysql' );
+	seed_cart( 'r1', 10, array( 'status' => 'recovered', 'sent_at' => $now, 'cart_total' => 60 ) );
+	seed_cart( 'r2', 10, array( 'status' => 'sent', 'sent_at' => $now ) );
+	ob_start(); CartRenew_WC_Settings::render_page(); $c = ob_get_clean();
+	assert_contains( '50%', $c );
+	assert_false( false !== strpos( $c, 'Reminder cost' ), 'no cost row until a cost is set' );
+
+	update_option( 'cartrenew_wc_settings', array_merge( get_option( 'cartrenew_wc_settings' ), array( 'message_cost' => 5 ) ) );
+	ob_start(); CartRenew_WC_Settings::render_page(); $d = ob_get_clean();
+	assert_contains( 'Reminder cost', $d );
+	assert_contains( '6x', $d, '60 revenue / (2 x 5) cost' );
+} );
+
+test( 'settings: message_cost is sanitised (negative, comma, junk)', function () {
+	assert_same( 0, CartRenew_WC_Settings::sanitize_settings( array( 'message_cost' => '-3' ) )['message_cost'] );
+	assert_same( 1.25, CartRenew_WC_Settings::sanitize_settings( array( 'message_cost' => '1,25' ) )['message_cost'] );
+	assert_same( 0, CartRenew_WC_Settings::sanitize_settings( array( 'message_cost' => 'abc' ) )['message_cost'] );
+} );
