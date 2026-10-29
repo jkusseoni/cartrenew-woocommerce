@@ -114,9 +114,9 @@ Deleting the plugin from the Plugins screen removes the `wp_cartrenew_carts` tab
 
 == Screenshots ==
 
-1. WhatsApp consent form on the WooCommerce cart page
-2. CartRenew settings page in WooCommerce admin
-3. CartRenew dashboard showing recovery analytics
+1. WhatsApp opt-in on the WooCommerce cart page: phone number and an unticked consent checkbox
+2. CartRenew settings page in WooCommerce admin, with one-click connect
+3. WhatsApp opt-in at checkout, using the billing phone number
 
 == Changelog ==
 = 0.1.5 =
