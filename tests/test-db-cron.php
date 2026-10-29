@@ -178,3 +178,32 @@ test( 'cron: respects configured wait minutes', function () {
 	CartRenew_WC_Cron::run();
 	assert_count( 0, $GLOBALS['wp']['http_calls'] );
 } );
+
+// ---- Recovery results ----
+test( 'stats: only reminded carts count; unmessaged purchases and failed sends are excluded', function () {
+	$now = current_time( 'mysql' );
+	seed_cart( 'rec1', 10, array( 'status' => 'recovered', 'sent_at' => $now, 'cart_total' => 40 ) );
+	seed_cart( 'rec2', 10, array( 'status' => 'recovered', 'sent_at' => $now, 'cart_total' => 10.5 ) );
+	seed_cart( 'sent1', 10, array( 'status' => 'sent', 'sent_at' => $now, 'cart_total' => 99 ) );
+	seed_cart( 'plain', 10, array( 'status' => 'recovered', 'cart_total' => 500 ) ); // bought, never messaged
+	seed_cart( 'failed', 10, array( 'status' => 'send_failed', 'sent_at' => $now ) );
+	seed_cart( 'track', 10 );
+	$st = CartRenew_WC_DB::get_recovery_stats( 30 );
+	assert_same( 3, $st['sent'] );
+	assert_same( 2, $st['recovered'] );
+	assert_same( 50.5, $st['revenue'] );
+	assert_same( 66.7, $st['rate'] );
+} );
+
+test( 'stats: window filters by reminder date; 0 = all time', function () {
+	$old = gmdate( 'Y-m-d H:i:s', time() - 40 * DAY_IN_SECONDS );
+	seed_cart( 'old', 10, array( 'status' => 'recovered', 'sent_at' => $old, 'cart_total' => 20 ) );
+	assert_same( 0, CartRenew_WC_DB::get_recovery_stats( 30 )['sent'] );
+	assert_same( 1, CartRenew_WC_DB::get_recovery_stats( 90 )['sent'] );
+	assert_same( 1, CartRenew_WC_DB::get_recovery_stats( 0 )['recovered'] );
+} );
+
+test( 'stats: empty table gives zeros without dividing by zero', function () {
+	$st = CartRenew_WC_DB::get_recovery_stats( 30 );
+	assert_same( array( 'sent' => 0, 'recovered' => 0, 'revenue' => 0.0, 'rate' => 0.0 ), $st );
+} );

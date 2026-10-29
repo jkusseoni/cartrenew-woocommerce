@@ -272,6 +272,12 @@ function esc_attr( $s ) {
 function esc_url( $s ) {
 	return htmlspecialchars( (string) $s, ENT_QUOTES );
 }
+function number_format_i18n( $n ) {
+	return number_format( (float) $n );
+}
+function wp_kses_post( $s ) {
+	return $s;
+}
 function checked( $a, $b = true, $echo = true ) {
 	$r = (string) $a === (string) $b ? "checked='checked'" : '';
 	if ( $echo ) {
