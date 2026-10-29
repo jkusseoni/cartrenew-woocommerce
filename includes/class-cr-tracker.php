@@ -59,17 +59,22 @@ class CartRenew_WC_Tracker {
 				continue;
 			}
 			$items[] = array(
-				'name'     => $product->get_name(),
-				'quantity' => $item['quantity'],
-				'price'    => $product->get_price(),
+				'name'         => $product->get_name(),
+				'quantity'     => $item['quantity'],
+				'price'        => $product->get_price(),
+				// Needed to rebuild the cart from the WhatsApp restore link.
+				'product_id'   => isset( $item['product_id'] ) ? absint( $item['product_id'] ) : 0,
+				'variation_id' => isset( $item['variation_id'] ) ? absint( $item['variation_id'] ) : 0,
+				'variation'    => ( isset( $item['variation'] ) && is_array( $item['variation'] ) ) ? $item['variation'] : array(),
 			);
 		}
 
 		$phone   = WC()->session->get( 'cartrenew_phone', '' );
 		$consent = WC()->session->get( 'cartrenew_consent', '' );
 
-		$customer_name = '';
-		if ( is_user_logged_in() ) {
+		// Prefer the first name typed at checkout; fall back to the account name.
+		$customer_name = WC()->session->get( 'cartrenew_name', '' );
+		if ( '' === $customer_name && is_user_logged_in() ) {
 			$user          = wp_get_current_user();
 			$customer_name = $user->display_name;
 		}
@@ -93,5 +98,12 @@ class CartRenew_WC_Tracker {
 		}
 
 		CartRenew_WC_DB::mark_status( $cart_key, 'recovered', array( 'order_id' => absint( $order_id ) ) );
+
+		// The shopper came back through a WhatsApp restore link: the original cart
+		// (the one the reminder was sent for) is the one that was recovered.
+		$restored_key = WC()->session ? WC()->session->get( 'cartrenew_restored_key', '' ) : '';
+		if ( $restored_key && $restored_key !== $cart_key ) {
+			CartRenew_WC_DB::mark_status( $restored_key, 'recovered', array( 'order_id' => absint( $order_id ) ) );
+		}
 	}
 }

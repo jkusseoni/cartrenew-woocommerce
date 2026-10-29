@@ -3,7 +3,7 @@
  * Plugin Name: CartRenew for WooCommerce - Abandoned Cart Recovery
  * Plugin URI:  https://www.cartrenew.com/en/woocommerce
  * Description: Automated WhatsApp-based cart abandonment recovery for WooCommerce stores, powered by CartRenew.
- * Version:     0.1.4
+ * Version:     0.1.5
  * Author:      CartRenew
  * Author URI:  https://www.cartrenew.com
  * License:     GPL v2 or later
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'CARTRENEW_WC_VERSION', '0.1.4' );
+define( 'CARTRENEW_WC_VERSION', '0.1.5' );
 define( 'CARTRENEW_WC_PLUGIN_FILE', __FILE__ );
 define( 'CARTRENEW_WC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CARTRENEW_WC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -47,11 +47,24 @@ function cartrenew_wc_init() {
 	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-tracker.php';
 	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-api.php';
 	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-cron.php';
+	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-feedback.php';
+	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-restore.php';
+
+	// Plugin updates don't re-run the activation hook: add new table columns here.
+	if ( get_option( 'cartrenew_wc_db_version' ) !== CARTRENEW_WC_VERSION ) {
+		CartRenew_WC_DB::create_table();
+		update_option( 'cartrenew_wc_db_version', CARTRENEW_WC_VERSION );
+	}
 
 	CartRenew_WC_Settings::init();
 	CartRenew_WC_Consent::init();
 	CartRenew_WC_Tracker::init();
 	CartRenew_WC_Cron::init();
+	CartRenew_WC_Restore::init();
+
+	if ( is_admin() ) {
+		CartRenew_WC_Feedback::init();
+	}
 }
 add_action( 'plugins_loaded', 'cartrenew_wc_init' );
 
@@ -61,6 +74,9 @@ add_action( 'plugins_loaded', 'cartrenew_wc_init' );
 function cartrenew_wc_activate() {
 	require_once CARTRENEW_WC_PLUGIN_DIR . 'includes/class-cr-db.php';
 	CartRenew_WC_DB::create_table();
+
+	// Send the merchant straight to the settings page on first activation.
+	set_transient( 'cartrenew_wc_activation_redirect', 1, 60 );
 
 	if ( ! wp_next_scheduled( 'cartrenew_wc_check_abandoned' ) ) {
 		wp_schedule_event( time(), 'cartrenew_five_minutes', 'cartrenew_wc_check_abandoned' );

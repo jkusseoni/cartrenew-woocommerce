@@ -6,12 +6,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Sends an abandoned-cart payload to the CartRenew backend.
  *
- * NOTE: this posts to {api_base}/abandoned-cart — that endpoint does not
- * exist yet on the CartRenew Next.js backend and needs to be built there.
- * It should: verify store_id + api_key, look up (or auto-create) the
- * WooCommerce store record, then enqueue the same Meta Cloud API send used
- * for Shopify (template "abandoned_cart_reminder", bodyVariables
- * [customer_name, checkout_url]) — same shape as the Shopify webhook path.
+ * Posts to {api_base}/abandoned-cart (app/api/woocommerce/abandoned-cart in the
+ * CartRenew backend). The backend verifies store_id + api_key (Bearer token),
+ * de-duplicates per cart_key, normalises the phone to E.164 and sends the
+ * WhatsApp recovery template.
  */
 class CartRenew_WC_API {
 
@@ -24,14 +22,28 @@ class CartRenew_WC_API {
 
 		$endpoint = trailingslashit( $settings['api_base'] ) . 'abandoned-cart';
 
+		// Send only what the message needs (no product ids / variation data).
+		$items = array();
+		$saved = json_decode( (string) $cart_row->cart_contents, true );
+		foreach ( is_array( $saved ) ? $saved : array() as $item ) {
+			$items[] = array(
+				'name'     => isset( $item['name'] ) ? $item['name'] : '',
+				'quantity' => isset( $item['quantity'] ) ? $item['quantity'] : 1,
+				'price'    => isset( $item['price'] ) ? $item['price'] : 0,
+			);
+		}
+
+		// Link that rebuilds the cart wherever it is opened.
+		$token = CartRenew_WC_DB::ensure_token( $cart_row );
+
 		$body = array(
 			'store_id'      => $settings['store_id'],
 			'cart_key'      => $cart_row->cart_key,
 			'customer_name' => $cart_row->customer_name,
 			'phone_number'  => $cart_row->phone_number,
 			'cart_total'    => $cart_row->cart_total,
-			'checkout_url'  => $cart_row->checkout_url,
-			'cart_contents' => json_decode( $cart_row->cart_contents, true ),
+			'checkout_url'  => CartRenew_WC_Restore::url_for( $token ),
+			'cart_contents' => $items,
 			'site_url'      => home_url(),
 		);
 
@@ -52,6 +64,13 @@ class CartRenew_WC_API {
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
+
+		// Free message limit reached: not a failure of this cart, the account
+		// needs a paid plan before more messages can be sent.
+		if ( 402 === (int) $code ) {
+			return new WP_Error( 'cartrenew_trial_limit', 'CartRenew free message limit reached.' );
+		}
+
 		if ( $code < 200 || $code >= 300 ) {
 			return new WP_Error(
 				'cartrenew_api_error',

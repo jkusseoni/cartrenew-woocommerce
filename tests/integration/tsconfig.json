@@ -1,0 +1,12 @@
+{
+  "extends": "../../../jkusseoni/cartrenew/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "/home/claude/jkusseoni/cartrenew",
+    "paths": {
+      "@/lib/supabase": ["/home/claude/cartrenew-woocommerce/tests/integration/fake-supabase.ts"],
+      "@/lib/services/messaging": ["/home/claude/cartrenew-woocommerce/tests/integration/messaging-stub.ts"],
+      "@/*": ["./*"]
+    }
+  },
+  "include": []
+}
