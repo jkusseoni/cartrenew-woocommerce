@@ -11,11 +11,17 @@ class CartRenew_WC_Settings {
 
 	const OPTION_KEY = 'cartrenew_wc_settings';
 
+	// Set by the cron when CartRenew reports the free message limit is used up.
+	const LIMIT_FLAG = 'cartrenew_wc_limit_reached';
+
+	const UPGRADE_URL = 'https://www.cartrenew.com/en#pricing';
+
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'add_menu' ) );
 		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
 		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect_after_activation' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'maybe_show_connect_notice' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'maybe_show_limit_notice' ) );
 		add_action( 'admin_post_cartrenew_wc_connect', array( __CLASS__, 'handle_connect' ) );
 	}
 
@@ -41,6 +47,7 @@ class CartRenew_WC_Settings {
 			$settings['api_key'] = sanitize_text_field( $api_key );
 		}
 		update_option( self::OPTION_KEY, $settings );
+		delete_transient( self::LIMIT_FLAG );
 	}
 
 	/**
@@ -143,6 +150,24 @@ class CartRenew_WC_Settings {
 
 		wp_safe_redirect( self::settings_url() );
 		exit;
+	}
+
+	/**
+	 * Shown while sending is paused because the free message limit is used up.
+	 */
+	public static function maybe_show_limit_notice() {
+		if ( ! get_transient( self::LIMIT_FLAG ) || ! current_user_can( 'manage_woocommerce' ) ) {
+			return;
+		}
+		?>
+		<div class="notice notice-warning">
+			<p>
+				<strong><?php esc_html_e( 'CartRenew free message limit reached.', 'cartrenew-for-woocommerce' ); ?></strong>
+				<?php esc_html_e( 'WhatsApp recovery messages are paused until you upgrade your plan.', 'cartrenew-for-woocommerce' ); ?>
+				<a href="<?php echo esc_url( self::UPGRADE_URL ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Upgrade now', 'cartrenew-for-woocommerce' ); ?></a>
+			</p>
+		</div>
+		<?php
 	}
 
 	/**

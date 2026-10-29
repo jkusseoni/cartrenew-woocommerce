@@ -28,11 +28,23 @@ class CartRenew_WC_Cron {
 			return;
 		}
 
+		// Free message limit already hit: stop calling the API until it is lifted
+		// (the flag expires on its own, so sending resumes after an upgrade).
+		if ( get_transient( CartRenew_WC_Settings::LIMIT_FLAG ) ) {
+			return;
+		}
+
 		$minutes = ! empty( $settings['abandon_minutes'] ) ? absint( $settings['abandon_minutes'] ) : 20;
 		$carts   = CartRenew_WC_DB::get_abandoned_carts( $minutes );
 
 		foreach ( $carts as $cart ) {
 			$result = CartRenew_WC_API::send_abandoned_cart( $cart );
+
+			if ( is_wp_error( $result ) && 'cartrenew_trial_limit' === $result->get_error_code() ) {
+				// Leave this cart (and the rest) untouched; only pause sending.
+				set_transient( CartRenew_WC_Settings::LIMIT_FLAG, 1, 6 * HOUR_IN_SECONDS );
+				break;
+			}
 
 			if ( is_wp_error( $result ) ) {
 				CartRenew_WC_DB::mark_status(

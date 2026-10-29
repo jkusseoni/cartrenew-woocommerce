@@ -156,6 +156,9 @@ class CartRenew_WC_DB {
 
 		$cutoff = self::local_cutoff( $minutes * 60 );
 
+		// Don't message very old carts (e.g. after a paused period or an outage).
+		$oldest = self::local_cutoff( 2 * DAY_IN_SECONDS );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom table, no core API available
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- transient cart data, caching not beneficial
 		return $wpdb->get_results(
@@ -165,12 +168,14 @@ class CartRenew_WC_DB {
 				 AND consent = %d
 				 AND phone_number IS NOT NULL AND phone_number != %s
 				 AND last_activity <= %s
+				 AND last_activity >= %s
 				 ORDER BY last_activity ASC
 				 LIMIT %d",
 				'tracking',
 				1,
 				'',
 				$cutoff,
+				$oldest,
 				$limit
 			)
 		);

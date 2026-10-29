@@ -15,4 +15,5 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}cartrenew_carts" );
 delete_option( 'cartrenew_wc_settings' );
 delete_option( 'cartrenew_wc_db_version' );
 delete_transient( 'cartrenew_wc_activation_redirect' );
+delete_transient( 'cartrenew_wc_limit_reached' );
 wp_clear_scheduled_hook( 'cartrenew_wc_check_abandoned' );

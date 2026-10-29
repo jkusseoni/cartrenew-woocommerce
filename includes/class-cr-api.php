@@ -64,6 +64,13 @@ class CartRenew_WC_API {
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
+
+		// Free message limit reached: not a failure of this cart, the account
+		// needs a paid plan before more messages can be sent.
+		if ( 402 === (int) $code ) {
+			return new WP_Error( 'cartrenew_trial_limit', 'CartRenew free message limit reached.' );
+		}
+
 		if ( $code < 200 || $code >= 300 ) {
 			return new WP_Error(
 				'cartrenew_api_error',

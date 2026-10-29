@@ -124,6 +124,8 @@ Deleting the plugin from the Plugins screen removes the `wp_cartrenew_carts` tab
 * New: WhatsApp opt-in at checkout (classic and block checkout), using the billing phone number and first name.
 * New: redirect to the settings page after activation and a notice until the store is connected.
 * New: the link in the WhatsApp message now rebuilds the shopper's cart wherever it is opened (another browser or device) and sends them to checkout. Links expire after 7 days and never restore an order that was already placed.
+* New: when your CartRenew free message limit is reached, sending pauses and a notice with an upgrade link is shown (carts are no longer marked as failed).
+* Improved: abandoned carts older than 2 days are no longer messaged.
 * New: optional feedback form when deactivating (nothing is sent unless you submit it).
 * New: deleting the plugin now removes its database table and settings.
 * Improved: carts are no longer marked as failed while the plugin is not connected yet.
