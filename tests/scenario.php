@@ -19,6 +19,10 @@ register_shutdown_function( function () {
 	) ) . "\n";
 } );
 
+if ( ! empty( $args['api_base'] ) ) {
+	update_option( 'cartrenew_wc_settings', array( 'api_base' => $args['api_base'] ) );
+}
+
 switch ( $name ) {
 	case 'restore':
 		if ( isset( $args['gmt_offset'] ) ) {

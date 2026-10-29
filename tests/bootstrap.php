@@ -317,6 +317,9 @@ function is_wp_error( $r ) {
 	return $r instanceof WP_Error;
 }
 function wp_remote_post( $url, $args = array() ) {
+	if ( getenv( 'CARTRENEW_IT' ) ) {
+		return it_http_post( $url, $args ); // integration mode: real HTTP
+	}
 	$GLOBALS['wp']['http_calls'][] = array( 'url' => $url, 'args' => $args );
 	$next = array_shift( $GLOBALS['wp']['http_queue'] );
 	return null === $next ? array( 'response' => array( 'code' => 200 ), 'body' => '{}' ) : $next;
@@ -540,7 +543,7 @@ function seed_cart( $key, $minutes_ago, $overrides = array() ) {
 			'status'        => 'tracking',
 			'last_activity' => $local,
 			'created_at'    => $local,
-			'restore_token' => 'tok' . $key . str_repeat( 'x', 20 ),
+			'restore_token' => 'tok' . preg_replace( '/[^A-Za-z0-9]/', '', $key ) . str_repeat( 'x', 20 ),
 		),
 		$overrides
 	);
@@ -565,4 +568,28 @@ function row_by_key( $key ) {
 		}
 	}
 	return null;
+}
+
+/** Integration mode: perform a real HTTP POST (what WordPress' HTTP API does). */
+function it_http_post( $url, $args ) {
+	$GLOBALS['wp']['http_calls'][] = array( 'url' => $url, 'args' => $args );
+	$ch = curl_init( $url );
+	$hdr = array();
+	foreach ( $args['headers'] ?? array() as $k => $v ) {
+		$hdr[] = "$k: $v";
+	}
+	curl_setopt_array( $ch, array(
+		CURLOPT_POST           => true,
+		CURLOPT_POSTFIELDS     => $args['body'] ?? '',
+		CURLOPT_HTTPHEADER     => $hdr,
+		CURLOPT_RETURNTRANSFER => true,
+		CURLOPT_TIMEOUT        => 10,
+	) );
+	$body = curl_exec( $ch );
+	if ( false === $body ) {
+		$e = curl_error( $ch );
+		return new WP_Error( 'http_request_failed', $e );
+	}
+	$code = curl_getinfo( $ch, CURLINFO_RESPONSE_CODE );
+	return array( 'response' => array( 'code' => $code ), 'body' => $body );
 }
