@@ -3,7 +3,7 @@ Contributors: cartrenew
 Tags: woocommerce, abandoned cart, whatsapp, cart recovery, cart abandonment
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 0.1.4
+Stable tag: 0.1.5
 Requires PHP: 7.4
 Requires Plugins: woocommerce
 License: GPLv2 or later
@@ -17,14 +17,14 @@ Every day, 70% of WooCommerce carts are abandoned. WhatsApp recovery gets 90%+ o
 
 **How it works:**
 
-1. A customer adds items to their cart and enters their WhatsApp number with consent on the cart page.
+1. A customer adds items to their cart and opts in to WhatsApp reminders on the cart page (phone number + consent) or at checkout (consent, using their billing phone number).
 2. If they leave without completing checkout, CartRenew detects the abandonment after a configurable wait time (default: 20 minutes).
 3. A WhatsApp recovery message is automatically sent to the customer with a direct link back to their cart.
 
 **Key Features:**
 
 * **WhatsApp Recovery** — Automated messages sent via WhatsApp using the CartRenew platform.
-* **Consent-First** — Phone number and opt-in captured on the cart page with explicit customer consent.
+* **Consent-First** — Phone number and opt-in captured on the cart page or at checkout with explicit customer consent (checkbox is never pre-ticked).
 * **WooCommerce Native** — Works with both classic shortcode-based and Gutenberg block-based WooCommerce cart templates.
 * **Easy Setup** — No coding required. Install plugin, enter your Store ID and API Key, done.
 * **Configurable Wait Time** — Set how long to wait before sending a recovery message (5–180 minutes).
@@ -103,6 +103,14 @@ Yes. CartRenew's consent-first design (explicit opt-in checkbox) and secure data
 3. CartRenew dashboard showing recovery analytics
 
 == Changelog ==
+= 0.1.5 =
+* Fixed: abandoned carts are now detected after the configured wait time on every timezone (the cutoff used the wrong sign for the site's UTC offset).
+* Fixed: phone numbers now get the calling code of the billing country (checkout) or your store's country (cart) instead of a fixed prefix.
+* New: "Connect with one click" on the settings page creates your CartRenew store and fills in your Store ID and API Key.
+* New: WhatsApp opt-in at checkout (classic and block checkout), using the billing phone number and first name.
+* New: redirect to the settings page after activation and a notice until the store is connected.
+* Improved: carts are no longer marked as failed while the plugin is not connected yet.
+
 = 0.1.4 =
 * Updated plugin name for guideline compliance
 * Added External services disclosure
@@ -124,6 +132,9 @@ Yes. CartRenew's consent-first design (explicit opt-in checkbox) and secure data
 * CartRenew API integration for WhatsApp message delivery
 
 == Upgrade Notice ==
+
+= 0.1.5 =
+Important fix: recovery messages are now sent at the right time in every timezone. Also adds one-click setup and a WhatsApp opt-in at checkout.
 
 = 0.1.2 =
 Phone number formatting fix — upgrade recommended for stores with international customers.

@@ -68,8 +68,9 @@ class CartRenew_WC_Tracker {
 		$phone   = WC()->session->get( 'cartrenew_phone', '' );
 		$consent = WC()->session->get( 'cartrenew_consent', '' );
 
-		$customer_name = '';
-		if ( is_user_logged_in() ) {
+		// Prefer the first name typed at checkout; fall back to the account name.
+		$customer_name = WC()->session->get( 'cartrenew_name', '' );
+		if ( '' === $customer_name && is_user_logged_in() ) {
 			$user          = wp_get_current_user();
 			$customer_name = $user->display_name;
 		}

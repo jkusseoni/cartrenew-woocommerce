@@ -1,19 +1,32 @@
 jQuery(function ($) {
 	'use strict';
 
+	var cfg = window.CartRenewConsent || {};
+	var i18n = cfg.i18n || {};
+	var isCheckout = cfg.context === 'checkout';
 	var $box = $('#cartrenew-consent-box');
 
-	// WooCommerce Blocks (Cart block) renders the cart via React after page
-	// load, so the target container may not exist yet — poll briefly for it.
-	var blockSelectors = [
-		'.wp-block-woocommerce-cart-totals-block',
-		'.wp-block-woocommerce-cart-order-summary-block',
-		'.wc-block-cart__totals-title'
-	];
-	var classicSelectors = [
-		'.cart-collaterals',
-		'.woocommerce-cart-form'
-	];
+	// WooCommerce Blocks render via React after page load, so the target
+	// container may not exist yet — poll briefly for it.
+	var blockSelectors = isCheckout
+		? [
+			'.wp-block-woocommerce-checkout-payment-block',
+			'.wc-block-checkout__payment-method',
+			'.wp-block-woocommerce-checkout-actions-block'
+		]
+		: [
+			'.wp-block-woocommerce-cart-totals-block',
+			'.wp-block-woocommerce-cart-order-summary-block',
+			'.wc-block-cart__totals-title'
+		];
+	var classicSelectors = isCheckout
+		? ['#payment', '.woocommerce-billing-fields', 'form.checkout']
+		: ['.cart-collaterals', '.woocommerce-cart-form'];
+
+	// Checkout fields (classic ids use underscores, Blocks ids use dashes).
+	var phoneSelector = '#billing_phone, #billing-phone, #shipping-phone, #shipping_phone';
+	var nameSelector = '#billing_first_name, #billing-first_name, #shipping-first_name';
+	var countrySelector = '#billing_country, #billing-country, #shipping-country';
 
 	function tryRelocate(attempt) {
 		if (!$box.length) {
@@ -23,12 +36,12 @@ jQuery(function ($) {
 		// If a classic PHP hook already rendered the box in position (not the
 		// hidden footer copy), don't inject a second one.
 		if ($box.css('display') !== 'none') {
-			bindHandlers($box);
 			return;
 		}
 
 		var $target = null;
-		for (var i = 0; i < blockSelectors.length; i++) {
+		var i;
+		for (i = 0; i < blockSelectors.length; i++) {
 			var $found = $(blockSelectors[i]).first();
 			if ($found.length) {
 				$target = $found;
@@ -36,8 +49,8 @@ jQuery(function ($) {
 			}
 		}
 		if (!$target) {
-			for (var j = 0; j < classicSelectors.length; j++) {
-				var $c = $(classicSelectors[j]).first();
+			for (i = 0; i < classicSelectors.length; i++) {
+				var $c = $(classicSelectors[i]).first();
 				if ($c.length) {
 					$target = $c;
 					break;
@@ -47,67 +60,109 @@ jQuery(function ($) {
 
 		if ($target) {
 			$box.insertBefore($target).show();
-			bindHandlers($box);
 			return;
 		}
 
-		// Cart DOM (block version) still loading — retry a few times.
+		// DOM (block version) still loading — retry a few times.
 		if (attempt < 20) {
 			setTimeout(function () { tryRelocate(attempt + 1); }, 250);
 		} else {
 			// Last resort: append near the end of the page body so the form
 			// isn't lost entirely, even if placement isn't ideal.
 			$box.appendTo('body').show();
-			bindHandlers($box);
 		}
 	}
 
-	function bindHandlers($scope) {
-		var $phone = $scope.find('#cartrenew_phone');
-		var $consent = $scope.find('#cartrenew_consent');
-		var $status = $scope.find('#cartrenew-consent-status');
-		var saveTimer = null;
-
-		function normalizePhone(raw) {
-			var trimmed = $.trim(raw);
-			var digits = trimmed.replace(/\D/g, '');
-			var cc = (window.CartRenewConsent && CartRenewConsent.default_cc) || '';
-
-			// Already international ("+44 ..." or "0044 ...") — keep as typed.
-			if (trimmed.charAt(0) === '+') {
-				return digits;
+	function firstValue(selector) {
+		var value = '';
+		$(selector).each(function () {
+			var current = String($(this).val() || '').trim();
+			if (current) {
+				value = current;
+				return false;
 			}
-			if (digits.indexOf('00') === 0) {
-				return digits.substring(2);
-			}
+		});
+		return value;
+	}
 
-			// National number: drop the trunk "0" and add the store country's code.
-			digits = digits.replace(/^0+/, '');
-			if (cc && digits.length > 0 && digits.length <= 10) {
-				return cc + digits;
-			}
+	// Build digits-only E.164 (no "+"): keep numbers typed with a country code,
+	// otherwise prefix the calling code of the billing country (checkout) or the
+	// store's base country (cart).
+	function normalizePhone(raw, country) {
+		var trimmed = String(raw || '').trim();
+		var digits = trimmed.replace(/\D/g, '');
+		var codes = cfg.calling_codes || {};
+		var cc = (country && codes[country]) || cfg.default_cc || '';
+
+		// Already international ("+44 ..." or "0044 ...") — keep as typed.
+		if (trimmed.charAt(0) === '+') {
 			return digits;
 		}
-
-		function save() {
-			$.post(CartRenewConsent.ajax_url, {
-				action: 'cartrenew_save_consent',
-				nonce: CartRenewConsent.nonce,
-				phone: normalizePhone($phone.val() || ''),
-				consent: $consent.is(':checked') ? 'yes' : 'no'
-			}).done(function () {
-				$status.text('Saved');
-				setTimeout(function () { $status.text(''); }, 1500);
-			});
+		if (digits.indexOf('00') === 0) {
+			return digits.substring(2);
 		}
 
-		function debouncedSave() {
-			clearTimeout(saveTimer);
-			saveTimer = setTimeout(save, 600);
+		// National number: drop the trunk "0" and add the country's code.
+		digits = digits.replace(/^0+/, '');
+		if (cc && digits.length > 0 && digits.length <= 10) {
+			return cc + digits;
+		}
+		return digits;
+	}
+
+	var saveTimer = null;
+
+	function flash(text) {
+		var $status = $('#cartrenew-consent-status');
+		$status.text(text);
+		setTimeout(function () { $status.text(''); }, isCheckout && text === i18n.need_phone ? 4000 : 1500);
+	}
+
+	function save() {
+		var data = {
+			action: 'cartrenew_save_consent',
+			nonce: cfg.nonce,
+			consent: $('#cartrenew_consent').is(':checked') ? 'yes' : 'no'
+		};
+
+		if (isCheckout) {
+			var rawPhone = firstValue(phoneSelector);
+			var name = firstValue(nameSelector);
+			if (rawPhone) {
+				data.phone = normalizePhone(rawPhone, firstValue(countrySelector));
+			} else if (data.consent === 'yes') {
+				flash(i18n.need_phone || '');
+			}
+			if (name) {
+				data.name = name;
+			}
+		} else {
+			data.phone = normalizePhone($('#cartrenew_phone').val() || '', '');
 		}
 
-		$phone.off('input').on('input', debouncedSave);
-		$consent.off('change').on('change', save);
+		$.post(cfg.ajax_url, data).done(function () {
+			if (!(isCheckout && !data.phone && data.consent === 'yes')) {
+				flash(i18n.saved || 'Saved');
+			}
+		});
+	}
+
+	function debouncedSave() {
+		clearTimeout(saveTimer);
+		saveTimer = setTimeout(save, 600);
+	}
+
+	// Delegated handlers: the box can be relocated and Blocks re-render inputs.
+	$(document).on('change', '#cartrenew_consent', save);
+	if (isCheckout) {
+		$(document).on('input change blur', phoneSelector + ', ' + nameSelector + ', ' + countrySelector, function () {
+			// Only keep the server copy fresh once the shopper has opted in.
+			if ($('#cartrenew_consent').is(':checked')) {
+				debouncedSave();
+			}
+		});
+	} else {
+		$(document).on('input', '#cartrenew_phone', debouncedSave);
 	}
 
 	tryRelocate(0);

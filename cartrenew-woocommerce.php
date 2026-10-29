@@ -3,7 +3,7 @@
  * Plugin Name: CartRenew for WooCommerce - Abandoned Cart Recovery
  * Plugin URI:  https://www.cartrenew.com/en/woocommerce
  * Description: Automated WhatsApp-based cart abandonment recovery for WooCommerce stores, powered by CartRenew.
- * Version:     0.1.4
+ * Version:     0.1.5
  * Author:      CartRenew
  * Author URI:  https://www.cartrenew.com
  * License:     GPL v2 or later
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'CARTRENEW_WC_VERSION', '0.1.4' );
+define( 'CARTRENEW_WC_VERSION', '0.1.5' );
 define( 'CARTRENEW_WC_PLUGIN_FILE', __FILE__ );
 define( 'CARTRENEW_WC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CARTRENEW_WC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
