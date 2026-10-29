@@ -19,6 +19,10 @@ jQuery(function ($) {
 			'.wp-block-woocommerce-cart-order-summary-block',
 			'.wc-block-cart__totals-title'
 		];
+	// Block cart: the items and totals blocks are two columns of one flex row,
+	// so inserting the box between them makes it a third column and breaks the
+	// layout. Put it at the end of the items column instead.
+	var blockCartMain = '.wp-block-woocommerce-cart-items-block, .wc-block-cart__main';
 	var classicSelectors = isCheckout
 		? ['#payment', '.woocommerce-billing-fields', 'form.checkout']
 		: ['.cart-collaterals', '.woocommerce-cart-form'];
@@ -41,6 +45,13 @@ jQuery(function ($) {
 
 		var $target = null;
 		var i;
+		if (!isCheckout) {
+			var $main = $(blockCartMain).first();
+			if ($main.length) {
+				$box.appendTo($main).show();
+				return;
+			}
+		}
 		for (i = 0; i < blockSelectors.length; i++) {
 			var $found = $(blockSelectors[i]).first();
 			if ($found.length) {

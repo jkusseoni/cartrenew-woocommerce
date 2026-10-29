@@ -149,8 +149,8 @@ class CartRenew_WC_Consent {
 		$consented   = WC()->session ? WC()->session->get( 'cartrenew_consent', '' ) : '';
 		$checked     = ( 'yes' === $consented ) ? 'checked' : '';
 		$style       = $hidden
-			? 'display:none;margin:16px 0;padding:14px;border:1px solid #ddd;border-radius:6px;'
-			: 'margin:16px 0;padding:14px;border:1px solid #ddd;border-radius:6px;';
+			? 'display:none;margin:16px 0;padding:14px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;width:100%;clear:both;'
+			: 'margin:16px 0;padding:14px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;width:100%;clear:both;';
 		?>
 		<div id="cartrenew-consent-box" style="<?php echo esc_attr( $style ); ?>">
 			<?php if ( $is_checkout ) : ?>

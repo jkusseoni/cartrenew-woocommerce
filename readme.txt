@@ -3,7 +3,7 @@ Contributors: cartrenew
 Tags: woocommerce, abandoned cart, whatsapp, cart recovery, cart abandonment
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 0.1.5
+Stable tag: 0.1.6
 Requires PHP: 7.4
 Requires Plugins: woocommerce
 License: GPLv2 or later
@@ -119,6 +119,9 @@ Deleting the plugin from the Plugins screen removes the `wp_cartrenew_carts` tab
 3. CartRenew dashboard showing recovery analytics
 
 == Changelog ==
+= 0.1.6 =
+* Fixed: on the block-based WooCommerce cart the WhatsApp opt-in box could overlap the cart items. It now sits under the items.
+
 = 0.1.5 =
 * Fixed: abandoned carts are now detected after the configured wait time on every timezone (the cutoff used the wrong sign for the site's UTC offset).
 * Fixed: phone numbers now get the calling code of the billing country (checkout) or your store's country (cart) instead of a fixed prefix.
@@ -154,6 +157,9 @@ Deleting the plugin from the Plugins screen removes the `wp_cartrenew_carts` tab
 * CartRenew API integration for WhatsApp message delivery
 
 == Upgrade Notice ==
+= 0.1.6 =
+Fixes the WhatsApp opt-in box overlapping the cart on the block-based WooCommerce cart.
+
 
 = 0.1.5 =
 Important fix: recovery messages are now sent at the right time in every timezone. Also adds one-click setup and a WhatsApp opt-in at checkout.
