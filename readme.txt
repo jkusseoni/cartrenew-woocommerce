@@ -3,7 +3,7 @@ Contributors: cartrenew
 Tags: woocommerce, abandoned cart, whatsapp, cart recovery, cart abandonment
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 0.1.6
+Stable tag: 0.1.7
 Requires PHP: 7.4
 Requires Plugins: woocommerce
 License: GPLv2 or later
@@ -119,6 +119,9 @@ Deleting the plugin from the Plugins screen removes the `wp_cartrenew_carts` tab
 3. WhatsApp opt-in at checkout, using the billing phone number
 
 == Changelog ==
+= 0.1.7 =
+* Fixed: an Indian mobile number that cannot exist (not starting 6-9) is now rejected at the opt-in with a clear message, instead of failing silently when the reminder is sent.
+
 = 0.1.6 =
 * Fixed: on the block-based WooCommerce cart the WhatsApp opt-in box could overlap the cart items. It now sits under the items.
 
@@ -157,6 +160,9 @@ Deleting the plugin from the Plugins screen removes the `wp_cartrenew_carts` tab
 * CartRenew API integration for WhatsApp message delivery
 
 == Upgrade Notice ==
+= 0.1.7 =
+Catches mistyped Indian phone numbers at the opt-in so shoppers can fix them and reminders reach them.
+
 = 0.1.6 =
 Fixes the WhatsApp opt-in box overlapping the cart on the block-based WooCommerce cart.
 

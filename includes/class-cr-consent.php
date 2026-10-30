@@ -70,6 +70,7 @@ class CartRenew_WC_Consent {
 				'i18n'          => array(
 					'saved'      => __( 'Saved', 'cartrenew-for-woocommerce' ),
 					'need_phone' => __( 'Enter your phone number above to get the reminder.', 'cartrenew-for-woocommerce' ),
+					'bad_phone'  => __( 'This does not look like a valid WhatsApp number. Please check it.', 'cartrenew-for-woocommerce' ),
 				),
 			)
 		);
@@ -175,16 +176,39 @@ class CartRenew_WC_Consent {
 		<?php
 	}
 
+	/**
+	 * Digits-only E.164 sanity check. Only India is checked strictly: an Indian
+	 * mobile is 91 + 10 digits and the first of those must be 6-9, so anything
+	 * else can never reach WhatsApp (Meta error 131026). Other countries pass.
+	 *
+	 * @param string $digits Digits only, with country code.
+	 */
+	public static function is_valid_phone( $digits ) {
+		$digits = preg_replace( '/\D/', '', (string) $digits );
+		if ( '' === $digits ) {
+			return false;
+		}
+		if ( 0 === strpos( $digits, '91' ) && 12 === strlen( $digits ) ) {
+			return 1 === preg_match( '/^91[6-9]\d{9}$/', $digits );
+		}
+		return true;
+	}
+
 	public static function ajax_save_consent() {
 		check_ajax_referer( 'cartrenew_consent', 'nonce' );
 
 		// Phone is optional in the request (checkout sends it only once typed), so a
 		// consent toggle never wipes a number saved earlier. Digits only, E.164 length.
-		$phone = null;
+		$phone         = null;
+		$invalid_phone = false;
 		if ( isset( $_POST['phone'] ) ) {
 			$phone = preg_replace( '/\D/', '', sanitize_text_field( wp_unslash( $_POST['phone'] ) ) );
 			if ( '' !== $phone && ( strlen( $phone ) < 8 || strlen( $phone ) > 15 ) ) {
 				$phone = '';
+			}
+			if ( '' !== $phone && ! self::is_valid_phone( $phone ) ) {
+				$phone         = '';
+				$invalid_phone = true;
 			}
 		}
 
@@ -205,6 +229,10 @@ class CartRenew_WC_Consent {
 		// picks it up even if the shopper never triggers another cart hook.
 		if ( class_exists( 'CartRenew_WC_Tracker' ) ) {
 			CartRenew_WC_Tracker::save_snapshot();
+		}
+
+		if ( $invalid_phone ) {
+			wp_send_json_error( array( 'message' => __( 'This does not look like a valid WhatsApp number. Please check it.', 'cartrenew-for-woocommerce' ) ) );
 		}
 
 		wp_send_json_success();

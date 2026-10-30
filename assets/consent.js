@@ -123,10 +123,10 @@ jQuery(function ($) {
 
 	var saveTimer = null;
 
-	function flash(text) {
+	function flash(text, long) {
 		var $status = $('#cartrenew-consent-status');
 		$status.text(text);
-		setTimeout(function () { $status.text(''); }, isCheckout && text === i18n.need_phone ? 4000 : 1500);
+		setTimeout(function () { $status.text(''); }, long || (isCheckout && text === i18n.need_phone) ? 4000 : 1500);
 	}
 
 	function save() {
@@ -151,7 +151,12 @@ jQuery(function ($) {
 			data.phone = normalizePhone($('#cartrenew_phone').val() || '', '');
 		}
 
-		$.post(cfg.ajax_url, data).done(function () {
+		$.post(cfg.ajax_url, data).done(function (res) {
+			// Server rejected the number (e.g. an Indian mobile that cannot exist).
+			if (res && res.success === false) {
+				flash((res.data && res.data.message) || i18n.bad_phone || '', true);
+				return;
+			}
 			if (!(isCheckout && !data.phone && data.consent === 'yes')) {
 				flash(i18n.saved || 'Saved');
 			}

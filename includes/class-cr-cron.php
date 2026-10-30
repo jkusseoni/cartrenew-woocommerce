@@ -38,6 +38,13 @@ class CartRenew_WC_Cron {
 		$carts   = CartRenew_WC_DB::get_abandoned_carts( $minutes );
 
 		foreach ( $carts as $cart ) {
+			// A number that can never receive WhatsApp (e.g. an Indian mobile not
+			// starting 6-9) would only come back as Meta error 131026: skip the call.
+			if ( ! CartRenew_WC_Consent::is_valid_phone( $cart->phone_number ) ) {
+				CartRenew_WC_DB::mark_status( $cart->cart_key, 'send_failed' );
+				continue;
+			}
+
 			$result = CartRenew_WC_API::send_abandoned_cart( $cart );
 
 			if ( is_wp_error( $result ) && 'cartrenew_trial_limit' === $result->get_error_code() ) {

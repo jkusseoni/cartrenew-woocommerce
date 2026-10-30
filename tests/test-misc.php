@@ -245,3 +245,38 @@ test( 'release: every PHP file lints and has the ABSPATH guard', function () {
 		}
 	}
 } );
+
+// ---- Indian mobile validation ----
+test( 'phone: is_valid_phone accepts real Indian mobiles and other countries, rejects impossible ones', function () {
+	foreach ( array( '919876543210', '916000000000', '917123456789', '918123456789', '447911123456', '14155552671' ) as $ok ) {
+		assert_true( CartRenew_WC_Consent::is_valid_phone( $ok ), $ok );
+	}
+	foreach ( array( '913166161609', '911234567890', '915999999999', '' ) as $bad ) {
+		assert_false( CartRenew_WC_Consent::is_valid_phone( $bad ), $bad );
+	}
+	// 10-digit number with no country code that happens to begin 91 is not touched.
+	assert_true( CartRenew_WC_Consent::is_valid_phone( '9123456789' ) );
+} );
+
+test( 'consent ajax: impossible Indian mobile is rejected with a message and not stored', function () {
+	configure_store();
+	WC()->cart->add_to_cart( 11, 1, 12, array( 'attribute_size' => 'M' ) );
+	$_POST = array( 'phone' => '+91 31661-61609', 'consent' => 'yes' );
+	$r = ajax( array( 'CartRenew_WC_Consent', 'ajax_save_consent' ) );
+	assert_false( $r->success );
+	assert_true( is_array( $r->data ) && ! empty( $r->data['message'] ) );
+	assert_same( '', WC()->session->data['cartrenew_phone'] );
+	$row = row_by_key( 'session_guest123' );
+	assert_true( null === $row || empty( $row->phone_number ) );
+} );
+
+test( 'cron: cart with an impossible stored number is skipped without an API call', function () {
+	configure_store();
+	seed_cart( 'badnum', 30, array( 'phone_number' => '913166161609' ) );
+	seed_cart( 'goodnum', 30, array( 'phone_number' => '919876543210' ) );
+	queue_http( http_response( 200, array( 'status' => 'sent' ) ) );
+	CartRenew_WC_Cron::run();
+	assert_same( 'send_failed', row_by_key( 'badnum' )->status );
+	assert_count( 1, $GLOBALS['wp']['http_calls'] );
+	assert_same( 'sent', row_by_key( 'goodnum' )->status );
+} );
